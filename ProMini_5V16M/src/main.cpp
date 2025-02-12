@@ -1,6 +1,8 @@
 #include <Arduino.h>
 
 #include "Servo.h"
+
+#include <SPI.h>
 #include "RF24.h"
 
 #include "config/config.h"
@@ -75,7 +77,7 @@ void setup() {
   /* Indicate led status */
   digitalWrite(LED_STATUS_RX, HIGH);
 
-  //radio.openWritingPipe(TX_ADDR);
+  radio.openWritingPipe(TX_ADDR);
   radio.openReadingPipe(2, TX_ADDR);
   radio.startListening();
 
@@ -104,24 +106,24 @@ void loop() {
   }
 
   throttle_output.writeMicroseconds(curData.payload[0]);
-  throttle_output.writeMicroseconds(curData.payload[1]);
-  throttle_output.writeMicroseconds(curData.payload[2]);
-  throttle_output.writeMicroseconds(curData.payload[3]);
-  throttle_output.writeMicroseconds(curData.payload[4]);
-  throttle_output.writeMicroseconds(curData.payload[5]);
+  yaw_output.writeMicroseconds(curData.payload[1]);
+  pitch_output.writeMicroseconds(curData.payload[2]);
+  roll_output.writeMicroseconds(curData.payload[3]);
+  AUX1_output.writeMicroseconds(curData.payload[4]);
+  AUX2_output.writeMicroseconds(curData.payload[5]);
 
   if (millis() - last_send >= SENDING_STATUS_PERIOD) {
     last_send = millis();
     if (send_enable) {
       radio.stopListening();
-      radio.openWritingPipe(TX_ADDR);
+      //radio.openWritingPipe(TX_ADDR);
 
       radio_link_send.startByte = RADIOLINK_START_BYTE;
       radio_link_send.endByte = RADIOLINK_END_BYTE;
       radio_link_send.infoByte = RADIOLINK_STATUS_PACKET_OK;
       radio.write(&radio_link_send, sizeof(radio_link_send));
 
-      radio.openReadingPipe(2, TX_ADDR);
+      //radio.openReadingPipe(2, TX_ADDR);
       radio.startListening();
     }
   }
@@ -141,7 +143,7 @@ void loop() {
 
 bool check_payload_receive(radiolink_protocol_t payload) {
   if ((payload.startByte == RADIOLINK_START_BYTE) && (payload.endByte == RADIOLINK_END_BYTE) && (payload.infoByte == RADIOLINK_INFO_STICK_POS)) {
-  return true;
+    return true;
   }
   else {
     return false;
